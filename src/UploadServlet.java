@@ -9,19 +9,17 @@ public class UploadServlet extends HttpServlet {
     protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         String source = request.getParameter("source");
         String destination = request.getParameter("destination");
-        ensureFolder(destination);
-        File dir = new File(source);
-        File[] files = dir.listFiles();
 
-
-
+        UploadRequest uploadRequest = new UploadRequest(source,destination);
+        try{
+        uploadRequest.validate();
+        uploadRequest.synchronizeFolderStructure();
+        }catch (Exception e){
+            response.setStatus(400);
+            response.getWriter().write(e.getMessage());
+        }
     }
 
-    private void ensureFolder(String folderPath) {
-        File folder = new File(folderPath);
-        if(!folder.exists())
-            folder.mkdirs();
-    }
 
     protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
     }

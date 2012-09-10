@@ -17,7 +17,7 @@
                       success:function(){
                           submitting = false;
                       },
-                      error:function(data,status,xmlHttpRequest){
+                      error:function(xmlHttpRequest,status,e){
                           $('#error').html(xmlHttpRequest.responseText);
                           submitting = false;
 
