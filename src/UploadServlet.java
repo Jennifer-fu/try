@@ -18,6 +18,9 @@ public class UploadServlet extends HttpServlet {
             response.setStatus(400);
             response.getWriter().write(e.getMessage());
         }
+        JobScheduler scheduler = new JobScheduler();
+        request.getSession().setAttribute("scheduler",scheduler);
+        scheduler.schedule(uploadRequest);
     }
 
 
