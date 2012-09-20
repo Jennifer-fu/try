@@ -136,6 +136,10 @@ public class UploadRequest {
         return total;
     }
 
+    public double getProgress() {
+        return ((double) completed / (double) total) * 100;
+    }
+
     public String getMessage() {
         return message;
     }
