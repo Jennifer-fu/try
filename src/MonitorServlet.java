@@ -9,7 +9,7 @@ import java.util.ArrayList;
 public class MonitorServlet extends HttpServlet {
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-        JobScheduler scheduler = (JobScheduler)request.getSession().getAttribute("scheduler");
+        JobScheduler scheduler = (JobScheduler)request.getServletContext().getAttribute("scheduler");
         ArrayList<UploadRequest> inQueue = scheduler.getRequestListInQueue();
         ArrayList<UploadRequest> inProgress = scheduler.getRequestListInProgress();
         ArrayList<UploadRequest> completed = scheduler.getRequestListCompleted();
@@ -32,7 +32,7 @@ public class MonitorServlet extends HttpServlet {
     private String renderInProgress(ArrayList<UploadRequest> inProgress) {
         String html = "<table cellpadding='3' cellspacing='0' border='1'><thead><tr><td>From</td><td>To</td><td>Percentage</td></tr></thead><tbody>";
         for (UploadRequest request : inProgress) {
-            html += "<tr><td>"+request.getSource()+"</td><td>"+request.getDestination()+"</td><td>${request.progress}</td></tr>";
+            html += "<tr><td>"+request.getSource()+"</td><td>"+request.getDestination()+"</td><td>"+request.getCompleted()+"/"+request.getTotal()+"</td></tr>";
         }
         html += "</tbody></table>";
         return html;

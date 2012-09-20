@@ -1,10 +1,11 @@
 import javax.swing.*;
 import java.io.File;
+import java.io.IOException;
 
 public class Job implements Runnable {
     private UploadRequest request;
     private File asset;
-    private Exception exception;
+    private Throwable exception;
 
     public Job(File asset, UploadRequest uploadRequest) {
         this.asset = asset;
@@ -17,14 +18,22 @@ public class Job implements Runnable {
 
     @Override
     public void run() {
-        System.out.println("run");
+        System.out.println("run - "+asset.getAbsolutePath()+" "+Thread.currentThread().getName());
+        if(request.status() == RequestStatus.FAILED)return;
+        String absolutePath = asset.getAbsolutePath();
+        String relativePath = absolutePath.substring(request.getSource().length(), absolutePath.lastIndexOf("/"));
+        try {
+            new AssetUploader().upload(asset, request.getDestination() + "/" + relativePath);
+        } catch (Throwable e) {
+            this.exception = e;
+        }
     }
 
     public File getAsset() {
         return asset;
     }
 
-    public Exception getException() {
+    public Throwable getException() {
         return exception;
     }
 }

@@ -9,18 +9,21 @@ public class UploadServlet extends HttpServlet {
     protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         String source = request.getParameter("source");
         String destination = request.getParameter("destination");
-
-        UploadRequest uploadRequest = new UploadRequest(source,destination);
-        try{
-        uploadRequest.validate();
-        uploadRequest.synchronizeFolderStructure();
-        }catch (Exception e){
+        UploadRequest uploadRequest = new UploadRequest(source, destination);
+        try {
+            uploadRequest.validate();
+            uploadRequest.synchronizeFolderStructure();
+        } catch (Exception e) {
             response.setStatus(400);
             response.getWriter().write(e.getMessage());
         }
-        JobScheduler scheduler = new JobScheduler();
-        request.getSession().setAttribute("scheduler",scheduler);
+
+        JobScheduler scheduler = JobScheduler.getInstance();
+        if(request.getServletContext().getAttribute("scheduler")==null){
+            request.getServletContext().setAttribute("scheduler", scheduler);
+        }
         scheduler.schedule(uploadRequest);
+
     }
 
 
