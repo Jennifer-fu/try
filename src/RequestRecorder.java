@@ -3,7 +3,9 @@ import org.h2.jdbcx.JdbcDataSource;
 
 import java.io.File;
 import java.sql.*;
+import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.List;
 
 public class RequestRecorder {
     private final JdbcConnectionPool connectionPool;
@@ -19,9 +21,10 @@ public class RequestRecorder {
     public void recordRequest(UploadRequest request) {
         try {
             Connection connection = connectionPool.getConnection();
-            PreparedStatement statement = connection.prepareStatement("insert into request(id, created_time) values(?,?)");
+            PreparedStatement statement = connection.prepareStatement("insert into request(id, created_time, status) values(?,?,?)");
             statement.setString(1, request.id());
             statement.setTimestamp(2, new Timestamp(System.currentTimeMillis()));
+            statement.setString(3, RequestStatus.IN_QUEUE.name());
             statement.execute();
             connection.close();
         } catch (SQLException e) {
@@ -64,7 +67,7 @@ public class RequestRecorder {
             Connection connection = connectionPool.getConnection();
             PreparedStatement statement = connection.prepareStatement("update request set completed_time = ?, status = ?, message = ? where id = ?");
             statement.setTimestamp(1, new Timestamp(System.currentTimeMillis()));
-            statement.setString(2, "completed");
+            statement.setString(2, RequestStatus.COMPLETED.name());
             statement.setString(3, request.getMessage());
             statement.setString(4, request.id());
             statement.execute();
@@ -117,5 +120,58 @@ public class RequestRecorder {
             e.printStackTrace();
         }
         return count == 0;
+    }
+
+    public ArrayList<UploadRequest> getRequestsInQueue() {
+        ArrayList<UploadRequest> requests = new ArrayList<UploadRequest>();
+        try {
+            Connection connection = connectionPool.getConnection();
+            PreparedStatement statement = connection.prepareStatement("select * from request where status = ? or status = ?");
+            statement.setString(1, RequestStatus.IN_QUEUE.name());
+            statement.setString(2, RequestStatus.IN_PROGRESS.name());
+            ResultSet resultSet = statement.executeQuery();
+            while (resultSet.next()) {
+                UploadRequest request = buildRequest(resultSet);
+                statement = connection.prepareStatement("select * from asset where request_id = ?");
+                statement.setString(1, request.id());
+                ResultSet assetsSet = statement.executeQuery();
+                while(assetsSet.next()){
+                    request.addAsset(buildAsset(assetsSet));
+                }
+                requests.add(request);
+            }
+            connection.close();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return requests;
+    }
+
+    private File buildAsset(ResultSet assetsSet) {
+        try {
+            return new File(assetsSet.getString("path"));
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+
+    private UploadRequest buildRequest(ResultSet resultSet) {
+        try {
+            String id = resultSet.getString("id");
+            UploadRequest request = new UploadRequest(id);
+            request.setTotal(resultSet.getInt("total"));
+            request.setCompleted(resultSet.getInt("completed"));
+            request.setStatus(resultSet.getString("status"));
+            request.setFailedAt(resultSet.getString("failed_at"));
+            request.setMessage(resultSet.getString("message"));
+            request.setCreatedTime(resultSet.getTimestamp("created_time"));
+            request.setCompletedTime(resultSet.getTimestamp("completed_time"));
+            return request;
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return null;
     }
 }

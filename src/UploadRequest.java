@@ -17,12 +17,22 @@ public class UploadRequest {
     private String failedAt;
     private Timestamp createdTime;
     private Timestamp completedTime;
+    private List<File> assets;
 
 
     public UploadRequest(String source, String destination) {
         this.source = new File(source);
         this.destination = new File(destination);
         this.id = generateId(source, destination);
+        this.assets = new ArrayList<File>();
+    }
+
+    public UploadRequest(String id) {
+        String[] dirs = id.split("_");
+        this.source = new File(dirs[0]);
+        this.destination = new File(dirs[1]);
+        this.id = id;
+        this.assets = new ArrayList<File>();
     }
 
     private String generateId(String source, String destination) {
@@ -51,6 +61,7 @@ public class UploadRequest {
     }
 
     public List<File> assets() {
+        if (assets.size() > 0) return assets;
         ArrayList<File> files = new ArrayList<File>();
         GetFiles(source, files);
         total = files.size();
@@ -103,8 +114,6 @@ public class UploadRequest {
     };
 
 
-
-
     public void inQueue() {
         status = RequestStatus.IN_QUEUE;
         createdTime = new Timestamp(System.currentTimeMillis());
@@ -127,12 +136,16 @@ public class UploadRequest {
         return total;
     }
 
+    public double getProgress() {
+        return ((double) completed / (double) total) * 100;
+    }
+
     public String getMessage() {
         return message;
     }
 
     public synchronized void start() {
-        if(status == RequestStatus.IN_QUEUE)
+        if (status == RequestStatus.IN_QUEUE)
             status = RequestStatus.IN_PROGRESS;
     }
 
@@ -168,5 +181,37 @@ public class UploadRequest {
 
     public Timestamp getCompletedTime() {
         return completedTime;
+    }
+
+    public void setCompletedTime(Timestamp completedTime) {
+        this.completedTime = completedTime;
+    }
+
+    public void setCreatedTime(Timestamp createdTime) {
+        this.createdTime = createdTime;
+    }
+
+    public void setMessage(String message) {
+        this.message = message;
+    }
+
+    public void setFailedAt(String failedAt) {
+        this.failedAt = failedAt;
+    }
+
+    public void setStatus(String status) {
+        this.status = RequestStatus.valueOf(status);
+    }
+
+    public void setCompleted(int completed) {
+        this.completed = completed;
+    }
+
+    public void setTotal(int total) {
+        this.total = total;
+    }
+
+    public void addAsset(File file) {
+        assets.add(file);
     }
 }
